@@ -1,0 +1,49 @@
+IF DB_ID(N'CafePOSDB') IS NULL CREATE DATABASE CafePOSDB;
+GO
+USE CafePOSDB;
+GO
+IF OBJECT_ID('dbo.ChiTietHoaDon','U') IS NOT NULL DROP TABLE dbo.ChiTietHoaDon;
+IF OBJECT_ID('dbo.HoaDon','U') IS NOT NULL DROP TABLE dbo.HoaDon;
+IF OBJECT_ID('dbo.MonAn','U') IS NOT NULL DROP TABLE dbo.MonAn;
+IF OBJECT_ID('dbo.DanhMuc','U') IS NOT NULL DROP TABLE dbo.DanhMuc;
+IF OBJECT_ID('dbo.BanAn','U') IS NOT NULL DROP TABLE dbo.BanAn;
+GO
+CREATE TABLE BanAn(
+ MaBan INT IDENTITY(1,1) PRIMARY KEY,
+ TenBan NVARCHAR(50) NOT NULL,
+ TrangThai NVARCHAR(20) NOT NULL CONSTRAINT DF_BanAn_TrangThai DEFAULT N'Trống',
+ CONSTRAINT CK_BanAn_TrangThai CHECK (TrangThai IN (N'Trống',N'Có khách'))
+);
+CREATE TABLE DanhMuc(
+ MaDanhMuc INT IDENTITY(1,1) PRIMARY KEY,
+ TenDanhMuc NVARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE MonAn(
+ MaMon INT IDENTITY(1,1) PRIMARY KEY,
+ TenMon NVARCHAR(100) NOT NULL,
+ MaDanhMuc INT NOT NULL REFERENCES DanhMuc(MaDanhMuc),
+ DonGia DECIMAL(18,2) NOT NULL CHECK (DonGia >= 0)
+);
+CREATE TABLE HoaDon(
+ MaHoaDon INT IDENTITY(1,1) PRIMARY KEY,
+ MaBan INT NOT NULL REFERENCES BanAn(MaBan),
+ GioVao DATETIME NOT NULL CONSTRAINT DF_HoaDon_GioVao DEFAULT GETDATE(),
+ GioRa DATETIME NULL,
+ TongTien DECIMAL(18,2) NOT NULL CONSTRAINT DF_HoaDon_TongTien DEFAULT 0,
+ TrangThai BIT NOT NULL CONSTRAINT DF_HoaDon_TrangThai DEFAULT 0
+);
+CREATE TABLE ChiTietHoaDon(
+ MaHoaDon INT NOT NULL REFERENCES HoaDon(MaHoaDon),
+ MaMon INT NOT NULL REFERENCES MonAn(MaMon),
+ SoLuong INT NOT NULL CHECK (SoLuong > 0),
+ DonGia DECIMAL(18,2) NOT NULL CHECK (DonGia >= 0),
+ CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY(MaHoaDon,MaMon)
+);
+INSERT INTO BanAn(TenBan) VALUES
+(N'Bàn 01'),(N'Bàn 02'),(N'Bàn 03'),(N'Bàn 04'),(N'Bàn 05'),(N'Bàn 06');
+INSERT INTO DanhMuc(TenDanhMuc) VALUES (N'Cà phê'),(N'Trà sữa'),(N'Đồ ăn nhẹ');
+INSERT INTO MonAn(TenMon,MaDanhMuc,DonGia) VALUES
+(N'Cà phê đen',1,20000),(N'Cà phê sữa',1,25000),(N'Bạc xỉu',1,30000),
+(N'Trà sữa truyền thống',2,35000),(N'Trà sữa matcha',2,40000),
+(N'Bánh croissant',3,28000),(N'Khoai tây chiên',3,30000);
+GO
